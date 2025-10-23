@@ -1,0 +1,8 @@
+/.venv
+/docs
+.env
+/.kilocode
+/node_modules
+/__pycache__
+/git_repos
+/.kilocode
