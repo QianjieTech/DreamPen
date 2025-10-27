@@ -5,22 +5,29 @@ from pathlib import Path
 from typing import Optional
 import aiofiles
 from backend.core.config import settings
+from backend.services.git_service import GitServiceFactory
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class FileService:
     """枚举式文件服务 - 只允许预定义的文件操作"""
     
-    def __init__(self, user_id: str, project_id: str):
+    def __init__(self, user_id: str, project_id: str, user_email: str = "user@dreampen.ai"):
         """
         初始化文件服务
         
         Args:
             user_id: 用户ID
             project_id: 项目ID
+            user_email: 用户邮箱(用于Git提交)
         """
         self.user_id = user_id
         self.project_id = project_id
+        self.user_email = user_email
         self.project_path = self._get_project_path()
+        self._git_service = None
     
     def _get_project_path(self) -> Path:
         """获取项目路径"""
@@ -65,13 +72,23 @@ class FileService:
         async with aiofiles.open(file_path, 'r', encoding='utf-8') as f:
             return await f.read()
     
-    async def _write(self, relative_path: str, content: str) -> None:
+    def _get_git_service(self):
+        """获取Git服务实例(延迟初始化)"""
+        if self._git_service is None:
+            try:
+                self._git_service = GitServiceFactory.create(self.project_path)
+            except Exception as e:
+                logger.warning(f"Git服务初始化失败: {e}")
+        return self._git_service
+    
+    async def _write(self, relative_path: str, content: str, auto_commit: bool = True) -> None:
         """
         内部写入方法
         
         Args:
             relative_path: 相对路径
             content: 文件内容
+            auto_commit: 是否自动提交到Git
         """
         file_path = self._validate_path(relative_path)
         
@@ -80,6 +97,10 @@ class FileService:
         
         async with aiofiles.open(file_path, 'w', encoding='utf-8') as f:
             await f.write(content)
+        
+        # 自动Git提交
+        if auto_commit:
+            await self._auto_commit(f"Update {relative_path}")
     
     # ========== 世界观设定 ==========
     
@@ -193,6 +214,25 @@ class FileService:
     
     # ========== 项目管理 ==========
     
+    async def _auto_commit(self, message: str) -> None:
+        """
+        自动提交更改到Git
+        
+        Args:
+            message: 提交消息
+        """
+        try:
+            git_service = self._get_git_service()
+            if git_service:
+                git_service.commit_changes(
+                    message=message,
+                    author_name=self.user_id,
+                    author_email=self.user_email
+                )
+                logger.info(f"自动提交: {message}")
+        except Exception as e:
+            logger.warning(f"自动提交失败: {e}")
+    
     async def init_project(self) -> None:
         """初始化项目目录结构"""
         directories = [
@@ -221,7 +261,15 @@ class FileService:
 - `04_style_guide/` - 文风指南
 - `05_chapters/` - 正文章节
 """
-        await self._write("README.md", readme_content)
+        await self._write("README.md", readme_content, auto_commit=False)
+        
+        # 初始化Git仓库并创建初始提交
+        try:
+            git_service = self._get_git_service()
+            if git_service:
+                logger.info("项目初始化完成，Git仓库已创建")
+        except Exception as e:
+            logger.warning(f"Git初始化失败: {e}")
     
     def project_exists(self) -> bool:
         """检查项目是否存在"""
@@ -331,12 +379,13 @@ class FileService:
         """
         await self._write(relative_path, content)
     
-    async def delete_file(self, relative_path: str) -> None:
+    async def delete_file(self, relative_path: str, auto_commit: bool = True) -> None:
         """
         删除文件（在安全路径内）
         
         Args:
             relative_path: 相对于项目根目录的路径
+            auto_commit: 是否自动提交到Git
             
         Raises:
             FileNotFoundError: 如果文件不存在
@@ -352,21 +401,26 @@ class FileService:
         
         # 删除文件
         file_path.unlink()
+        
+        # 自动Git提交
+        if auto_commit:
+            await self._auto_commit(f"Delete {relative_path}")
 
 
 class FileServiceFactory:
     """文件服务工厂"""
     
     @staticmethod
-    def create(user_id: str, project_id: str) -> FileService:
+    def create(user_id: str, project_id: str, user_email: str = "user@dreampen.ai") -> FileService:
         """
         创建文件服务实例
         
         Args:
             user_id: 用户ID
             project_id: 项目ID
+            user_email: 用户邮箱(用于Git提交)
             
         Returns:
             文件服务实例
         """
-        return FileService(user_id, project_id)
+        return FileService(user_id, project_id, user_email)

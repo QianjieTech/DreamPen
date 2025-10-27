@@ -14,11 +14,11 @@ const apiClient = axios.create({
 // 请求拦截器
 apiClient.interceptors.request.use(
   (config) => {
-    // 可以在这里添加认证 token
-    // const token = localStorage.getItem('token');
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+    // 添加认证 token
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => {
@@ -37,7 +37,8 @@ apiClient.interceptors.response.use(
       
       // 可以根据状态码做不同处理
       if (status === 401) {
-        // 未授权，可能需要重新登录
+        // 未授权 - 只记录错误，不自动跳转
+        // 跳转逻辑由各个组件或store处理
         console.error('Unauthorized access');
       } else if (status === 404) {
         console.error('Resource not found');

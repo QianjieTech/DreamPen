@@ -1,12 +1,14 @@
 """
 项目管理API路由
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from backend.models.schemas import (
     ProjectCreate,
     ProjectResponse,
     SuccessResponse
 )
+from backend.models.database import User
+from backend.core.dependencies import get_current_user
 from backend.services.file_service import FileServiceFactory
 from datetime import datetime
 
@@ -16,14 +18,14 @@ router = APIRouter(prefix="/projects", tags=["Projects"])
 @router.post("/", response_model=ProjectResponse)
 async def create_project(
     project: ProjectCreate,
-    user_id: str = "demo_user"  # TODO: 从认证中获取
+    current_user: User = Depends(get_current_user)
 ):
     """
     创建新项目
     
     Args:
         project: 项目信息
-        user_id: 用户ID
+        current_user: 当前登录用户
         
     Returns:
         项目响应
@@ -32,8 +34,8 @@ async def create_project(
         # 生成项目ID(简化版本,实际应使用UUID)
         project_id = project.name.lower().replace(" ", "_")
         
-        # 初始化项目目录
-        file_service = FileServiceFactory.create(user_id, project_id)
+        # 使用当前用户的username作为user_id
+        file_service = FileServiceFactory.create(current_user.username, project_id)
         await file_service.init_project()
         
         return ProjectResponse(
@@ -50,20 +52,20 @@ async def create_project(
 @router.get("/{project_id}/chapters", response_model=list[dict])
 async def list_chapters(
     project_id: str,
-    user_id: str = "demo_user"
+    current_user: User = Depends(get_current_user)
 ):
     """
     列出项目的所有章节
     
     Args:
         project_id: 项目ID
-        user_id: 用户ID
+        current_user: 当前登录用户
         
     Returns:
         章节列表
     """
     try:
-        file_service = FileServiceFactory.create(user_id, project_id)
+        file_service = FileServiceFactory.create(current_user.username, project_id)
         chapters = await file_service.list_chapters()
         
         return chapters
@@ -75,20 +77,20 @@ async def list_chapters(
 @router.get("/{project_id}/exists", response_model=dict)
 async def check_project_exists(
     project_id: str,
-    user_id: str = "demo_user"
+    current_user: User = Depends(get_current_user)
 ):
     """
     检查项目是否存在
     
     Args:
         project_id: 项目ID
-        user_id: 用户ID
+        current_user: 当前登录用户
         
     Returns:
         存在状态
     """
     try:
-        file_service = FileServiceFactory.create(user_id, project_id)
+        file_service = FileServiceFactory.create(current_user.username, project_id)
         exists = file_service.project_exists()
         
         return {"exists": exists}
@@ -100,20 +102,20 @@ async def check_project_exists(
 @router.get("/{project_id}/files", response_model=list[dict])
 async def get_file_tree(
     project_id: str,
-    user_id: str = "demo_user"
+    current_user: User = Depends(get_current_user)
 ):
     """
     获取项目文件树（动态扫描）
     
     Args:
         project_id: 项目ID
-        user_id: 用户ID
+        current_user: 当前登录用户
         
     Returns:
         文件树结构
     """
     try:
-        file_service = FileServiceFactory.create(user_id, project_id)
+        file_service = FileServiceFactory.create(current_user.username, project_id)
         
         # 如果项目不存在，先初始化
         if not file_service.project_exists():
@@ -132,7 +134,7 @@ async def get_file_tree(
 async def read_file(
     project_id: str,
     file_path: str,
-    user_id: str = "demo_user"
+    current_user: User = Depends(get_current_user)
 ):
     """
     读取任意文件内容（动态）
@@ -140,13 +142,13 @@ async def read_file(
     Args:
         project_id: 项目ID
         file_path: 文件路径
-        user_id: 用户ID
+        current_user: 当前登录用户
         
     Returns:
         文件内容
     """
     try:
-        file_service = FileServiceFactory.create(user_id, project_id)
+        file_service = FileServiceFactory.create(current_user.username, project_id)
         
         # 使用通用的文件读取方法
         content = await file_service.read_any_file(file_path)
@@ -163,14 +165,16 @@ async def read_file(
 @router.post("/{project_id}/files/create", response_model=dict)
 async def create_file(
     project_id: str,
-    request: dict
+    request: dict,
+    current_user: User = Depends(get_current_user)
 ):
     """
     创建新文件
     
     Args:
         project_id: 项目ID
-        request: 包含 file_path、content 和 user_id 的请求体
+        request: 包含 file_path 和 content 的请求体
+        current_user: 当前登录用户
         
     Returns:
         成功响应
@@ -178,12 +182,11 @@ async def create_file(
     try:
         file_path = request.get("file_path", "")
         content = request.get("content", "")
-        user_id = request.get("user_id", "demo_user")
         
         if not file_path:
             raise HTTPException(status_code=400, detail="文件路径不能为空")
         
-        file_service = FileServiceFactory.create(user_id, project_id)
+        file_service = FileServiceFactory.create(current_user.username, project_id)
         
         # 创建文件
         await file_service.write_any_file(file_path, content)
@@ -199,7 +202,8 @@ async def create_file(
 async def write_file(
     project_id: str,
     file_path: str,
-    request: dict
+    request: dict,
+    current_user: User = Depends(get_current_user)
 ):
     """
     写入任意文件内容（动态）
@@ -207,16 +211,16 @@ async def write_file(
     Args:
         project_id: 项目ID
         file_path: 文件路径
-        request: 包含 content 和 user_id 的请求体
+        request: 包含 content 的请求体
+        current_user: 当前登录用户
         
     Returns:
         成功响应
     """
     try:
         content = request.get("content", "")
-        user_id = request.get("user_id", "demo_user")
         
-        file_service = FileServiceFactory.create(user_id, project_id)
+        file_service = FileServiceFactory.create(current_user.username, project_id)
         
         # 使用通用的文件写入方法
         await file_service.write_any_file(file_path, content)
@@ -232,7 +236,7 @@ async def write_file(
 async def delete_file(
     project_id: str,
     file_path: str,
-    user_id: str = "demo_user"
+    current_user: User = Depends(get_current_user)
 ):
     """
     删除文件
@@ -240,13 +244,13 @@ async def delete_file(
     Args:
         project_id: 项目ID
         file_path: 文件路径
-        user_id: 用户ID
+        current_user: 当前登录用户
         
     Returns:
         成功响应
     """
     try:
-        file_service = FileServiceFactory.create(user_id, project_id)
+        file_service = FileServiceFactory.create(current_user.username, project_id)
         
         # 删除文件
         await file_service.delete_file(file_path)

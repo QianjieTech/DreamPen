@@ -4,12 +4,25 @@ DreamPen Backend - FastAPI应用入口
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.core.config import settings
+from backend.core.database import init_db, close_db
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """应用生命周期管理"""
+    # 启动时初始化数据库
+    await init_db()
+    yield
+    # 关闭时清理资源
+    await close_db()
+
 
 # 创建FastAPI应用
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
-    debug=settings.debug
+    debug=settings.debug,
+    lifespan=lifespan
 )
 
 # 配置CORS
@@ -39,7 +52,9 @@ async def health_check():
 
 
 # 导入并注册路由
-from backend.api import worldview, projects
+from backend.api import worldview, projects, auth, version_control
 
+app.include_router(auth.router, prefix=settings.api_prefix)
 app.include_router(worldview.router, prefix=settings.api_prefix)
 app.include_router(projects.router, prefix=settings.api_prefix)
+app.include_router(version_control.router, prefix=settings.api_prefix)

@@ -1,8 +1,9 @@
 """
 Pydantic数据模型
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from typing import Optional
+from datetime import datetime
 
 
 # ========== 项目相关 ==========
@@ -80,3 +81,41 @@ class ErrorResponse(BaseModel):
     """错误响应"""
     error: str = Field(..., description="错误消息")
     detail: Optional[str] = None
+
+
+# ========== 用户认证相关 ==========
+
+class UserRegister(BaseModel):
+    """用户注册请求"""
+    username: str = Field(..., min_length=3, max_length=50, description="用户名")
+    email: EmailStr = Field(..., description="邮箱")
+    password: str = Field(..., min_length=6, max_length=100, description="密码")
+
+
+class UserLogin(BaseModel):
+    """用户登录请求"""
+    username: str = Field(..., description="用户名")
+    password: str = Field(..., description="密码")
+
+
+class Token(BaseModel):
+    """令牌响应"""
+    access_token: str = Field(..., description="访问令牌")
+    token_type: str = Field(default="bearer", description="令牌类型")
+
+
+class TokenData(BaseModel):
+    """令牌数据"""
+    username: Optional[str] = None
+
+
+class UserResponse(BaseModel):
+    """用户响应"""
+    id: int = Field(..., description="用户ID")
+    username: str = Field(..., description="用户名")
+    email: str = Field(..., description="邮箱")
+    is_active: bool = Field(..., description="是否激活")
+    created_at: datetime = Field(..., description="创建时间")
+    
+    class Config:
+        from_attributes = True

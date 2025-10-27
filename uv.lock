@@ -376,6 +376,7 @@ source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
     { name = "aiosqlite" },
+    { name = "bcrypt" },
     { name = "fastapi", extra = ["standard"] },
     { name = "gitpython" },
     { name = "langchain" },
@@ -401,6 +402,7 @@ dev = [
 requires-dist = [
     { name = "aiofiles", specifier = ">=25.1.0" },
     { name = "aiosqlite", specifier = ">=0.19.0" },
+    { name = "bcrypt", specifier = ">=5.0.0" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.104.0" },
     { name = "gitpython", specifier = ">=3.1.40" },
     { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.25.0" },
