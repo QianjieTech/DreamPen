@@ -7,7 +7,7 @@ import Layout from '../components/Layout';
 import Workspace from '../components/Workspace';
 import FileTree from '../components/FileTree';
 import MarkdownEditor from '../components/MarkdownEditor';
-import ChatPanel from '../components/ChatPanel';
+import MultiChatPanel from '../components/MultiChatPanel';
 import { useAppStore } from '../store';
 import { projectAPI } from '../api/project';
 import { worldviewAPI } from '../api/worldview';
@@ -319,7 +319,56 @@ const Home: React.FC = () => {
             onSave={handleSave}
           />
         }
-        chatPanel={<ChatPanel onSendMessage={handleSendMessage} />}
+        chatPanel={
+          <MultiChatPanel
+            projectId={projectId}
+            onSendMessage={async (sessionId: number, message: string, onStreamUpdate: (content: string) => void) => {
+              // 调用流式 API,使用回调来更新UI
+              try {
+                const currentMessages = useAppStore.getState().messages;
+                const MAX_HISTORY = 200;
+                const recentMessages = currentMessages.slice(-MAX_HISTORY);
+                
+                const conversationHistory: ChatMessage[] = recentMessages.map(msg => ({
+                  role: msg.role as 'user' | 'assistant',
+                  content: msg.content,
+                }));
+                
+                let fullResponse = '';
+                
+                // 使用流式API
+                await worldviewAPI.chatStream(
+                  {
+                    message: message,
+                    conversation_history: conversationHistory,
+                  },
+                  // onChunk - 处理每个数据块
+                  (chunk) => {
+                    if (chunk.type === 'content') {
+                      // AI对话内容 - 打字机效果
+                      fullResponse += chunk.content;
+                      onStreamUpdate(fullResponse); // 调用回调更新UI
+                    }
+                  },
+                  // onComplete
+                  async () => {
+                    console.log('✅ 流式响应完成');
+                  },
+                  // onError
+                  (error) => {
+                    console.error('❌ 流式响应错误:', error);
+                    throw error;
+                  }
+                );
+                
+                return fullResponse;
+              } catch (error: any) {
+                console.error('❌ 发送消息失败:', error);
+                return '❌ AI响应失败,请重试';
+              }
+            }}
+          />
+        }
       />
     </Layout>
   );

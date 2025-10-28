@@ -17,6 +17,7 @@ interface AppState {
   isFileModified: boolean;
   
   // 聊天相关
+  currentConversationId: number | null; // 当前对话ID
   messages: Message[];
   isAiTyping: boolean;
   documentGenerationProgress: number; // 0-100
@@ -25,6 +26,7 @@ interface AppState {
   // UI 状态
   isLeftPanelCollapsed: boolean;
   isRightPanelCollapsed: boolean;
+  isChatCollapsed: boolean; // 聊天面板是否折叠
   
   // Actions
   setCurrentProjectId: (id: string | null) => void;
@@ -32,13 +34,16 @@ interface AppState {
   setSelectedFile: (file: FileNode | null) => void;
   setFileContent: (content: string) => void;
   setIsFileModified: (modified: boolean) => void;
+  setCurrentConversationId: (id: number | null) => void;
   addMessage: (message: Message) => void;
-  updateLastMessage: (content: string) => void; // 新增：更新最后一条消息（用于打字机效果）
+  updateLastMessage: (content: string) => void;
   clearMessages: () => void;
+  setMessages: (messages: Message[]) => void; // 新增：设置消息列表
   setIsAiTyping: (typing: boolean) => void;
-  setDocumentGenerationProgress: (progress: number, status: string) => void; // 新增：设置文档生成进度
+  setDocumentGenerationProgress: (progress: number, status: string) => void;
   toggleLeftPanel: () => void;
   toggleRightPanel: () => void;
+  toggleChatPanel: () => void; // 新增：折叠/展开聊天面板
   
   // 复合操作
   openFile: (file: FileNode, content: string) => void;
@@ -54,12 +59,14 @@ export const useAppStore = create<AppState>()(
       selectedFile: null,
       fileContent: '',
       isFileModified: false,
+      currentConversationId: null,
       messages: [],
       isAiTyping: false,
       documentGenerationProgress: 0,
       documentGenerationStatus: '',
       isLeftPanelCollapsed: false,
       isRightPanelCollapsed: false,
+      isChatCollapsed: false,
       
       // Actions
       setCurrentProjectId: (id) => set({ currentProjectId: id }),
@@ -78,6 +85,8 @@ export const useAppStore = create<AppState>()(
       
       setIsFileModified: (modified) => set({ isFileModified: modified }),
       
+      setCurrentConversationId: (id) => set({ currentConversationId: id }),
+      
       addMessage: (message) =>
         set((state) => ({
           messages: [...state.messages, message],
@@ -95,7 +104,9 @@ export const useAppStore = create<AppState>()(
           return { messages };
         }),
       
-      clearMessages: () => set({ messages: [] }),
+      clearMessages: () => set({ messages: [], currentConversationId: null }),
+      
+      setMessages: (messages) => set({ messages }),
       
       setIsAiTyping: (typing) => set({ isAiTyping: typing }),
       
@@ -113,6 +124,11 @@ export const useAppStore = create<AppState>()(
       toggleRightPanel: () =>
         set((state) => ({
           isRightPanelCollapsed: !state.isRightPanelCollapsed,
+        })),
+      
+      toggleChatPanel: () =>
+        set((state) => ({
+          isChatCollapsed: !state.isChatCollapsed,
         })),
       
       // 复合操作

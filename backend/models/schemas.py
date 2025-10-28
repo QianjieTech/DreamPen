@@ -119,3 +119,53 @@ class UserResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+# ========== 对话相关 ==========
+
+class Message(BaseModel):
+    """消息模型"""
+    id: str = Field(..., description="消息ID")
+    role: str = Field(..., description="角色: user, assistant, system")
+    content: str = Field(..., description="消息内容")
+    timestamp: int = Field(..., description="时间戳")
+
+
+class ConversationCreate(BaseModel):
+    """创建对话请求"""
+    project_id: str = Field(..., description="项目ID")
+    title: Optional[str] = Field(None, description="对话标题")
+    messages: list[Message] = Field(default_factory=list, description="初始消息列表")
+
+
+class ConversationUpdate(BaseModel):
+    """更新对话请求"""
+    title: Optional[str] = Field(None, description="对话标题")
+    messages: Optional[list[Message]] = Field(None, description="消息列表")
+    is_collapsed: Optional[bool] = Field(None, description="是否折叠")
+
+
+class ConversationResponse(BaseModel):
+    """对话响应"""
+    id: int = Field(..., description="对话ID")
+    user_id: int = Field(..., description="用户ID")
+    project_id: str = Field(..., description="项目ID")
+    title: Optional[str] = Field(None, description="对话标题")
+    messages: list[Message] = Field(..., description="消息列表")
+    is_collapsed: bool = Field(..., description="是否折叠")
+    created_at: datetime = Field(..., description="创建时间")
+    updated_at: datetime = Field(..., description="更新时间")
+    
+    class Config:
+        from_attributes = True
+
+
+class MessageCreate(BaseModel):
+    """添加消息请求"""
+    message: Message = Field(..., description="消息对象")
+
+
+class MessageResponse(BaseModel):
+    """消息响应"""
+    conversation_id: int = Field(..., description="对话ID")
+    message: Message = Field(..., description="消息对象")

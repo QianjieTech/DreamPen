@@ -9,6 +9,8 @@ import {
   UserOutlined,
   ClearOutlined,
   LoadingOutlined,
+  UpOutlined,
+  DownOutlined,
 } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -28,6 +30,8 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ onSendMessage }) => {
   const clearMessages = useAppStore((state) => state.clearMessages);
   const documentGenerationProgress = useAppStore((state) => state.documentGenerationProgress);
   const documentGenerationStatus = useAppStore((state) => state.documentGenerationStatus);
+  const isChatCollapsed = useAppStore((state) => state.isChatCollapsed);
+  const toggleChatPanel = useAppStore((state) => state.toggleChatPanel);
   
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -95,17 +99,45 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ onSendMessage }) => {
           <RobotOutlined className="text-lg text-blue-500" />
           <span className="font-semibold text-gray-700">AI 助手</span>
           <Tag color="green">在线</Tag>
+          {messages.length > 0 && (
+            <Tag color="blue">{messages.length} 条消息</Tag>
+          )}
         </div>
-        <Button
-          type="text"
-          size="small"
-          icon={<ClearOutlined />}
-          onClick={handleClearMessages}
-          disabled={messages.length === 0}
-        >
-          清空
-        </Button>
+        <Space>
+          <Button
+            type="text"
+            size="small"
+            icon={<ClearOutlined />}
+            onClick={handleClearMessages}
+            disabled={messages.length === 0}
+          >
+            清空
+          </Button>
+          <Button
+            type="text"
+            size="small"
+            icon={isChatCollapsed ? <UpOutlined /> : <DownOutlined />}
+            onClick={toggleChatPanel}
+          >
+            {isChatCollapsed ? '展开' : '折叠'}
+          </Button>
+        </Space>
       </div>
+
+      {/* 折叠状态 */}
+      {isChatCollapsed && (
+        <div className="flex-1 flex items-center justify-center bg-gray-50">
+          <div className="text-center text-gray-400">
+            <RobotOutlined className="text-3xl mb-2" />
+            <p>对话已折叠</p>
+            <p className="text-sm">点击上方"展开"按钮继续对话</p>
+          </div>
+        </div>
+      )}
+
+      {/* 正常展开状态 */}
+      {!isChatCollapsed && (
+        <>
 
       {/* 消息列表 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -231,19 +263,21 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ onSendMessage }) => {
             onKeyDown={handleKeyDown}
             placeholder="输入消息... (Enter 发送, Shift+Enter 换行)"
             autoSize={{ minRows: 1, maxRows: 4 }}
-            disabled={isLoading}
+            disabled={isLoading || isChatCollapsed}
           />
           <Button
             type="primary"
             icon={<SendOutlined />}
             onClick={handleSendMessage}
             loading={isLoading}
-            disabled={!inputValue.trim()}
+            disabled={!inputValue.trim() || isChatCollapsed}
           >
             发送
           </Button>
         </Space.Compact>
       </div>
+        </>
+      )}
     </div>
   );
 };

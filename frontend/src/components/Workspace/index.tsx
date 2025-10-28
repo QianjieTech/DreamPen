@@ -14,7 +14,6 @@ interface WorkspaceProps {
 
 const Workspace: React.FC<WorkspaceProps> = ({ fileTree, editor, chatPanel }) => {
   const [leftCollapsed, setLeftCollapsed] = useState(false);
-  const [rightCollapsed, setRightCollapsed] = useState(false);
 
   return (
     <Layout className="h-full">
@@ -35,15 +34,11 @@ const Workspace: React.FC<WorkspaceProps> = ({ fileTree, editor, chatPanel }) =>
         {editor}
       </Content>
 
-      {/* 右侧 AI 对话面板 */}
+      {/* 右侧 AI 对话面板 - 固定宽度,不可折叠 */}
       <Sider
-        collapsible
-        collapsed={rightCollapsed}
-        onCollapse={setRightCollapsed}
         width={400}
         className="bg-white border-l border-gray-200"
         theme="light"
-        reverseArrow
       >
         <div className="h-full overflow-hidden">{chatPanel}</div>
       </Sider>
