@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ProjectList from './pages/ProjectList';
 import { useAuthStore } from './store/auth';
 
 // 私有路由组件 - 需要登录才能访问
@@ -34,8 +35,19 @@ function App() {
           <Route path="/register" element={<Register />} />
           
           {/* 受保护的路由 - 需要登录 */}
+          {/* 项目列表页 - 登录后的首页 */}
           <Route
             path="/"
+            element={
+              <PrivateRoute>
+                <ProjectList />
+              </PrivateRoute>
+            }
+          />
+          
+          {/* 项目创作界面 */}
+          <Route
+            path="/project/:projectId"
             element={
               <PrivateRoute>
                 <Home />

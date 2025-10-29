@@ -35,10 +35,29 @@ async def chat_with_worldview_agent_stream(
     Returns:
         流式响应
     """
+    print(f"\n{'='*60}")
+    print(f"[WorldviewAPI] 收到流式聊天请求")
+    print(f"  - user_id: {user_id}")
+    print(f"  - project_id: {project_id}")
+    print(f"  - message: {request.message[:50]}..." if len(request.message) > 50 else f"  - message: {request.message}")
+    print(f"  - 历史消息数: {len(request.conversation_history)}")
+    print(f"{'='*60}\n")
+    
     async def generate():
+        print("[generate] 生成器函数开始执行")
         try:
+            print("[generate] 进入try块")
+            
+            # 立即发送一个初始消息，确保连接建立
+            initial_msg = json.dumps({'type': 'status', 'message': '连接已建立'}, ensure_ascii=False)
+            print(f"[generate] 发送初始消息: {initial_msg}")
+            yield f"data: {initial_msg}\n\n".encode('utf-8')
+            print("[generate] 初始消息已发送")
+            
             # 创建Agent
+            print("[generate] 开始创建Agent...")
             agent = AgentFactory.create_worldview_agent()
+            print("[generate] Agent创建成功")
             
             # 转换对话历史
             conversation_history = []
@@ -47,37 +66,59 @@ async def chat_with_worldview_agent_stream(
                     conversation_history.append(HumanMessage(content=msg.content))
                 elif msg.role == "assistant":
                     conversation_history.append(AIMessage(content=msg.content))
+            print(f"[generate] 对话历史转换完成, 共{len(conversation_history)}条消息")
             
             # 调用Agent的流式方法
+            chunk_count = 0
+            print("[generate] 开始调用agent.chat_stream...")
             async for chunk in agent.chat_stream(
                 user_message=request.message,
                 conversation_history=conversation_history,
                 user_id=user_id,
                 project_id=project_id
             ):
-                # 发送SSE格式的数据
-                yield f"data: {json.dumps(chunk, ensure_ascii=False)}\n\n"
+                chunk_count += 1
+                print(f"[generate] 收到chunk #{chunk_count}: {chunk.get('type', 'unknown')}")
+                # 发送SSE格式的数据 - 使用 UTF-8 编码
+                json_str = json.dumps(chunk, ensure_ascii=False)
+                sse_data = f"data: {json_str}\n\n".encode('utf-8')
+                yield sse_data
                 await asyncio.sleep(0.01)  # 小延迟避免过快
             
+            print(f"[generate] Agent流式响应完成, 共{chunk_count}个chunk")
+            
             # 发送完成信号
-            yield f"data: {json.dumps({'type': 'done'}, ensure_ascii=False)}\n\n"
+            done_json = json.dumps({'type': 'done'}, ensure_ascii=False)
+            done_signal = f"data: {done_json}\n\n".encode('utf-8')
+            print("[generate] 发送完成信号")
+            yield done_signal
+            print("[generate] 生成器正常结束")
             
         except Exception as e:
+            print(f"[generate] 捕获异常: {type(e).__name__}: {str(e)}")
+            import traceback
+            traceback.print_exc()
             error_data = {
                 'type': 'error',
                 'message': str(e)
             }
-            yield f"data: {json.dumps(error_data, ensure_ascii=False)}\n\n"
+            error_json = json.dumps(error_data, ensure_ascii=False)
+            yield f"data: {error_json}\n\n".encode('utf-8')
+            print("[generate] 错误消息已发送")
     
-    return StreamingResponse(
+    print("[WorldviewAPI] 准备返回StreamingResponse...")
+    response = StreamingResponse(
         generate(),
-        media_type="text/event-stream",
+        media_type="text/event-stream; charset=utf-8",
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
-            "X-Accel-Buffering": "no"  # 禁用nginx缓冲
+            "X-Accel-Buffering": "no",  # 禁用nginx缓冲
+            "Transfer-Encoding": "chunked"
         }
     )
+    print("[WorldviewAPI] StreamingResponse已创建，准备返回")
+    return response
 
 
 @router.post("/chat", response_model=WorldviewChatResponse)
@@ -118,7 +159,7 @@ async def chat_with_worldview_agent(
         )
         
         # 添加日志
-        print(f"🔵 Agent返回:")
+        print(f"[Agent] 返回结果:")
         print(f"  - ai_reply长度: {len(ai_reply)}")
         print(f"  - file_operations: {file_operations}")
         

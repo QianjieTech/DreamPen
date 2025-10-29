@@ -10,6 +10,15 @@ export interface Project {
   updatedAt: string;
 }
 
+export interface ProjectListItem {
+  id: number;
+  project_id: string;
+  name: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface FileNode {
   id: string;
   name: string;
@@ -20,10 +29,12 @@ export interface FileNode {
 
 export interface CreateProjectRequest {
   name: string;
-  userId: string;
+  description?: string;
 }
 
 export interface CreateProjectResponse {
   project_id: string;
-  message: string;
+  name: string;
+  description?: string;
+  created_at: string;
 }

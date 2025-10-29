@@ -4,6 +4,11 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import SecretStr
 from pathlib import Path
+import os
+
+
+# 获取项目根目录（backend目录的父目录）
+PROJECT_ROOT = Path(__file__).parent.parent.parent.resolve()
 
 
 class Settings(BaseSettings):
@@ -23,11 +28,11 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-4"
     openai_temperature: float = 0.7
     
-    # 文件存储配置
-    git_repos_base_path: Path = Path("git_repos")
+    # 文件存储配置 - 使用绝对路径
+    git_repos_base_path: Path = PROJECT_ROOT / "git_repos"
     
-    # 数据库配置
-    database_url: str = "sqlite+aiosqlite:///./dreampen.db"
+    # 数据库配置 - 使用绝对路径，数据库文件放在项目根目录
+    database_url: str = f"sqlite+aiosqlite:///{PROJECT_ROOT}/dreampen.db"
     
     # JWT配置
     secret_key: str = "your-secret-key-change-in-production"

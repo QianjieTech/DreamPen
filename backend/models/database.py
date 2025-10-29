@@ -25,6 +25,22 @@ class User(Base):
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"
 
 
+class Project(Base):
+    """项目模型 - 存储用户的书籍项目"""
+    __tablename__ = "projects"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    project_id = Column(String(100), nullable=False, unique=True, index=True)  # 项目唯一标识
+    name = Column(String(200), nullable=False)  # 项目名称
+    description = Column(Text, nullable=True)  # 项目描述
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
+    
+    def __repr__(self):
+        return f"<Project(id={self.id}, user_id={self.user_id}, project_id='{self.project_id}', name='{self.name}')>"
+
+
 class Conversation(Base):
     """对话模型 - 存储AI助手对话历史"""
     __tablename__ = "conversations"

@@ -4,8 +4,8 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
-  timeout: 2400000, // 增加到120秒，因为AI需要时间生成长文档
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://192.168.0.163:8000',
+  timeout: 2400000, 
   headers: {
     'Content-Type': 'application/json',
   },

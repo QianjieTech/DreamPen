@@ -2,14 +2,32 @@
  * 项目管理 API
  */
 import apiClient from './client';
-import type { CreateProjectRequest, CreateProjectResponse, FileNode } from '../types/project';
+import type { CreateProjectRequest, CreateProjectResponse, FileNode, ProjectListItem } from '../types/project';
 
 export const projectAPI = {
+  /**
+   * 获取用户的所有项目
+   */
+  listProjects: (): Promise<ProjectListItem[]> =>
+    apiClient.get('/api/projects/'),
+
+  /**
+   * 获取单个项目详情
+   */
+  getProject: (projectId: string): Promise<ProjectListItem> =>
+    apiClient.get(`/api/projects/${projectId}`),
+
   /**
    * 创建新项目
    */
   createProject: (data: CreateProjectRequest) =>
     apiClient.post<CreateProjectResponse>('/api/projects/', data),
+
+  /**
+   * 删除项目
+   */
+  deleteProject: (projectId: string) =>
+    apiClient.delete(`/api/projects/${projectId}`),
 
   /**
    * 获取项目章节列表

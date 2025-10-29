@@ -2,6 +2,7 @@
  * 主页面组件
  */
 import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { message } from 'antd';
 import Layout from '../components/Layout';
 import Workspace from '../components/Workspace';
@@ -9,15 +10,45 @@ import FileTree from '../components/FileTree';
 import MarkdownEditor from '../components/MarkdownEditor';
 import MultiChatPanel from '../components/MultiChatPanel';
 import { useAppStore } from '../store';
+import { useAuthStore } from '../store/auth';
 import { projectAPI } from '../api/project';
 import { worldviewAPI } from '../api/worldview';
-import type { FileNode } from '../types/project';
-import type { ChatMessage } from '../types/chat';
+import type { FileNode, ProjectListItem } from '../types/project';
+import type { ChatMessage, Message } from '../types/chat';
 
 const Home: React.FC = () => {
-  // 临时使用硬编码的项目ID和用户ID，实际应用中应该从路由或认证系统获取
-  const [projectId] = useState('test-project');
-  const [userId] = useState('test-user');
+  const navigate = useNavigate();
+  const { projectId } = useParams<{ projectId: string }>();
+  const { user } = useAuthStore();
+  const [projectInfo, setProjectInfo] = useState<ProjectListItem | null>(null);
+
+  // 如果没有projectId或user,重定向到项目列表
+  useEffect(() => {
+    if (!projectId) {
+      message.error('缺少项目ID');
+      navigate('/');
+    }
+    if (!user) {
+      message.error('用户未登录');
+      navigate('/login');
+    }
+  }, [projectId, user, navigate]);
+
+  // 加载项目信息
+  useEffect(() => {
+    if (!projectId) return;
+    
+    const loadProjectInfo = async () => {
+      try {
+        const info = await projectAPI.getProject(projectId);
+        setProjectInfo(info);
+      } catch (error) {
+        console.error('加载项目信息失败:', error);
+      }
+    };
+    
+    loadProjectInfo();
+  }, [projectId]);
 
   // 从 Zustand store 获取状态和方法
   const fileTree = useAppStore((state) => state.fileTree);
@@ -32,10 +63,12 @@ const Home: React.FC = () => {
 
   // 初始化：加载文件树
   useEffect(() => {
+    if (!projectId || !user) return;
+
     const loadFileTree = async () => {
       try {
-        // 从后端获取文件树
-        const tree = await projectAPI.getFileTree(projectId, userId);
+        // 从后端获取文件树 - 使用认证用户
+        const tree = await projectAPI.getFileTree(projectId, user.username);
         setFileTree(tree);
         console.log('✅ 文件树加载成功，来自后端 API');
         message.success('项目加载成功');
@@ -47,13 +80,15 @@ const Home: React.FC = () => {
     };
 
     loadFileTree();
-  }, [projectId, userId, setFileTree]);
+  }, [projectId, user, setFileTree]);
 
   // 处理文件选择
   const handleFileSelect = async (file: FileNode) => {
+    if (!projectId || !user) return;
+
     try {
       // 尝试从后端加载文件内容
-      const data = (await projectAPI.readFile(projectId, userId, file.path)) as any;
+      const data = (await projectAPI.readFile(projectId, user.username, file.path)) as any;
       openFile(file, data.content);
       console.log('文件加载成功:', file.name);
     } catch (error) {
@@ -72,23 +107,23 @@ const Home: React.FC = () => {
 
   // 处理保存
   const handleSave = async (content: string) => {
-    console.log('🔵 handleSave 被调用');
-    console.log('  - selectedFile:', selectedFile);
-    console.log('  - content length:', content.length);
-    
-    if (!selectedFile) {
+    if (!projectId || !user || !selectedFile) {
       message.error('没有选中的文件');
       return;
     }
 
+    console.log('🔵 handleSave 被调用');
+    console.log('  - selectedFile:', selectedFile);
+    console.log('  - content length:', content.length);
+
     try {
       console.log('🔵 开始保存文件到后端...');
       console.log('  - projectId:', projectId);
-      console.log('  - userId:', userId);
+      console.log('  - username:', user.username);
       console.log('  - filePath:', selectedFile.path);
       
-      // 尝试保存到后端
-      await projectAPI.writeFile(projectId, userId, selectedFile.path, content);
+      // 保存到后端
+      await projectAPI.writeFile(projectId, user.username, selectedFile.path, content);
       console.log('✅ 后端保存成功');
       
       // 更新 store 中的内容
@@ -107,10 +142,12 @@ const Home: React.FC = () => {
 
   // 处理创建文件
   const handleFileCreate = async (filePath: string) => {
+    if (!projectId || !user) return;
+
     try {
-      await projectAPI.createFile(projectId, userId, filePath, '');
+      await projectAPI.createFile(projectId, user.username, filePath, '');
       // 重新加载文件树
-      const tree = await projectAPI.getFileTree(projectId, userId);
+      const tree = await projectAPI.getFileTree(projectId, user.username);
       setFileTree(tree);
       message.success('文件创建成功');
     } catch (error) {
@@ -121,11 +158,13 @@ const Home: React.FC = () => {
 
   // 处理创建文件夹
   const handleFolderCreate = async (folderPath: string) => {
+    if (!projectId || !user) return;
+
     try {
       // 创建一个 .gitkeep 文件来保持文件夹
-      await projectAPI.createFile(projectId, userId, `${folderPath}/.gitkeep`, '');
+      await projectAPI.createFile(projectId, user.username, `${folderPath}/.gitkeep`, '');
       // 重新加载文件树
-      const tree = await projectAPI.getFileTree(projectId, userId);
+      const tree = await projectAPI.getFileTree(projectId, user.username);
       setFileTree(tree);
       message.success('文件夹创建成功');
     } catch (error) {
@@ -136,19 +175,21 @@ const Home: React.FC = () => {
 
   // 处理删除文件
   const handleFileDelete = async (filePath: string) => {
+    if (!projectId || !user) return;
+
     console.log('🔵 handleFileDelete 被调用');
     console.log('  - filePath:', filePath);
     console.log('  - projectId:', projectId);
-    console.log('  - userId:', userId);
+    console.log('  - username:', user.username);
     
     try {
       console.log('🔵 调用后端删除 API...');
-      await projectAPI.deleteFile(projectId, userId, filePath);
+      await projectAPI.deleteFile(projectId, user.username, filePath);
       console.log('✅ 后端删除成功');
       
       // 重新加载文件树
       console.log('🔵 重新加载文件树...');
-      const tree = await projectAPI.getFileTree(projectId, userId);
+      const tree = await projectAPI.getFileTree(projectId, user.username);
       setFileTree(tree);
       console.log('✅ 文件树已更新, 文件数:', tree.length);
       
@@ -162,6 +203,8 @@ const Home: React.FC = () => {
 
   // 处理发送消息（流式版本）
   const handleSendMessage = async (messageText: string): Promise<string> => {
+    if (!projectId || !user) return '';
+
     try {
       // 从 store 获取当前对话历史
       const currentMessages = useAppStore.getState().messages;
@@ -175,7 +218,7 @@ const Home: React.FC = () => {
         content: msg.content,
       }));
       
-      console.log('🔵 发送对话请求（流式 + 打字机）');
+      console.log('[Chat] 发送对话请求（流式 + 打字机）');
       console.log('  - 消息内容:', messageText);
       console.log('  - 总消息数:', currentMessages.length);
       console.log('  - 发送历史消息数:', conversationHistory.length);
@@ -202,16 +245,16 @@ const Home: React.FC = () => {
         },
         // onChunk - 处理每个数据块
         (chunk) => {
-          console.log('📦 收到数据块:', chunk);
+          console.log('[Chat] 收到数据块:', chunk);
           
           if (chunk.type === 'content') {
             // AI对话内容 - 打字机效果
             fullResponse += chunk.content;
             updateLastMessage(fullResponse);
-            console.log('💬 内容片段:', chunk.content);
+            console.log('[Chat] 内容片段:', chunk.content);
           } else if (chunk.type === 'status') {
             // 状态消息
-            console.log('📊 状态:', chunk.message);
+            console.log('[Chat] 状态:', chunk.message);
             message.info(chunk.message);
             setDocumentGenerationProgress(0, chunk.message);
           } else if (chunk.type === 'document') {
@@ -219,36 +262,36 @@ const Home: React.FC = () => {
             documentContent += chunk.content;
             const progress = Math.min(95, Math.floor((documentContent.length / estimatedDocLength) * 100));
             setDocumentGenerationProgress(progress, `生成中... (${documentContent.length} 字符)`);
-            console.log('📄 文档进度:', progress + '%', documentContent.length, '字符');
+            console.log('[Chat] 文档进度:', progress + '%', documentContent.length, '字符');
           } else if (chunk.type === 'file_operation') {
             // 文件操作
             fileOperation = chunk.operation;
             setDocumentGenerationProgress(100, '文档生成完成');
-            console.log('📁 文件操作:', fileOperation);
+            console.log('[Chat] 文件操作:', fileOperation);
           }
         },
         // onComplete - 完成回调
         async () => {
-          console.log('✅ 流式响应完成');
+          console.log('[Chat] 流式响应完成');
           console.log('  - 完整回复长度:', fullResponse.length);
           console.log('  - 文档内容长度:', documentContent.length);
           
           // 处理文件操作
-          if (fileOperation) {
+          if (fileOperation && user) {
             try {
-              console.log('🔵 执行文件写入:', fileOperation.path);
-              await projectAPI.writeFile(projectId, userId, fileOperation.path, fileOperation.content);
-              console.log('✅ 文件写入成功:', fileOperation.path);
+              console.log('[Chat] 执行文件写入:', fileOperation.path);
+              await projectAPI.writeFile(projectId, user.username, fileOperation.path, fileOperation.content);
+              console.log('[Chat] 文件写入成功:', fileOperation.path);
               message.success(`文件已创建: ${fileOperation.path}`);
               
               // 重新加载文件树
-              const tree = await projectAPI.getFileTree(projectId, userId);
+              const tree = await projectAPI.getFileTree(projectId, user.username);
               setFileTree(tree);
               
               // 重置进度
               setDocumentGenerationProgress(0, '');
             } catch (error) {
-              console.error('❌ 文件写入失败:', error);
+              console.error('[Chat] 文件写入失败:', error);
               message.error(`文件创建失败: ${fileOperation.path}`);
             }
           } else {
@@ -258,7 +301,7 @@ const Home: React.FC = () => {
         },
         // onError - 错误回调
         (error) => {
-          console.error('❌ 流式响应错误:', error);
+          console.error('[Chat] 流式响应错误:', error);
           message.error('AI响应失败，请重试');
           throw error;
         }
@@ -274,10 +317,10 @@ const Home: React.FC = () => {
         return '世界观文档已生成完成！请查看左侧文件树中的 worldview.md 文件。';
       }
       
-      console.warn('⚠️ 流式响应未返回任何内容');
+      console.warn('[Chat] 流式响应未返回任何内容');
       return '收到响应，但没有内容返回。';
     } catch (error: any) {
-      console.error('❌ 发送消息失败:');
+      console.error('[Chat] 发送消息失败:');
       console.error('  - 错误类型:', error?.constructor?.name);
       console.error('  - 错误消息:', error?.message);
       console.error('  - 状态码:', error?.response?.status);
@@ -286,21 +329,35 @@ const Home: React.FC = () => {
       
       // 如果是超时错误
       if (error?.code === 'ECONNABORTED' || error?.message?.includes('timeout')) {
-        return '⏰ 请求超时。对话历史过长，AI处理时间较长。建议清空对话历史后重试。';
+        return '[超时] 请求超时。对话历史过长，AI处理时间较长。建议清空对话历史后重试。';
       }
       
       // 如果后端返回了错误信息
       if (error?.response?.data?.detail) {
-        return `❌ 后端错误: ${error.response.data.detail}`;
+        return `[错误] 后端错误: ${error.response.data.detail}`;
       }
       
       // 如果后端未启动或出错，返回模拟回复
-      return '❌ 这是一个模拟的 AI 回复。后端服务可能未启动或出现错误，请检查后端服务状态和控制台日志。';
+      return '[错误] 这是一个模拟的 AI 回复。后端服务可能未启动或出现错误，请检查后端服务状态和控制台日志。';
     }
   };
 
+  // 处理返回项目列表
+  const handleBackToProjects = () => {
+    navigate('/');
+  };
+
+  // 如果没有projectId或user，不渲染内容
+  if (!projectId || !user) {
+    return null;
+  }
+
   return (
-    <Layout>
+    <Layout 
+      showBackButton={true}
+      projectName={projectInfo?.name}
+      onBack={handleBackToProjects}
+    >
       <Workspace
         fileTree={
           <FileTree
@@ -322,49 +379,89 @@ const Home: React.FC = () => {
         chatPanel={
           <MultiChatPanel
             projectId={projectId}
-            onSendMessage={async (sessionId: number, message: string, onStreamUpdate: (content: string) => void) => {
+            onSendMessage={async (sessionId: number, message: string, conversationHistory: Message[], onStreamUpdate: (content: string) => void) => {
               // 调用流式 API,使用回调来更新UI
               try {
-                const currentMessages = useAppStore.getState().messages;
-                const MAX_HISTORY = 200;
-                const recentMessages = currentMessages.slice(-MAX_HISTORY);
-                
-                const conversationHistory: ChatMessage[] = recentMessages.map(msg => ({
+                // 使用传入的 conversationHistory（来自当前 session）
+                const chatHistory: ChatMessage[] = conversationHistory.map(msg => ({
                   role: msg.role as 'user' | 'assistant',
                   content: msg.content,
                 }));
                 
+                console.log('[MultiChat] 发送消息');
+                console.log('  - 当前session消息数:', conversationHistory.length);
+                console.log('  - 新消息:', message.slice(0, 50));
+                
                 let fullResponse = '';
+                let documentContent = '';
+                let fileOperation: any = null;
+                let estimatedDocLength = 5000;
+                
+                const { setDocumentGenerationProgress } = useAppStore.getState();
                 
                 // 使用流式API
                 await worldviewAPI.chatStream(
                   {
                     message: message,
-                    conversation_history: conversationHistory,
+                    conversation_history: chatHistory,
                   },
                   // onChunk - 处理每个数据块
                   (chunk) => {
                     if (chunk.type === 'content') {
                       // AI对话内容 - 打字机效果
                       fullResponse += chunk.content;
-                      onStreamUpdate(fullResponse); // 调用回调更新UI
+                      onStreamUpdate(fullResponse);
+                    } else if (chunk.type === 'status') {
+                      // 状态消息
+                      console.log('[MultiChat] 状态:', chunk.message);
+                      setDocumentGenerationProgress(0, chunk.message);
+                    } else if (chunk.type === 'document') {
+                      // 文档生成内容
+                      documentContent += chunk.content;
+                      const progress = Math.min(95, Math.floor((documentContent.length / estimatedDocLength) * 100));
+                      setDocumentGenerationProgress(progress, `生成中... (${documentContent.length} 字符)`);
+                    } else if (chunk.type === 'file_operation') {
+                      // 文件操作
+                      fileOperation = chunk.operation;
+                      setDocumentGenerationProgress(100, '文档生成完成');
                     }
                   },
                   // onComplete
                   async () => {
-                    console.log('✅ 流式响应完成');
+                    console.log('[MultiChat] 流式响应完成');
+                    
+                    // 处理文件操作
+                    if (fileOperation && user && projectId) {
+                      try {
+                        console.log('[MultiChat] 执行文件写入:', fileOperation.path);
+                        await projectAPI.writeFile(projectId, user.username, fileOperation.path, fileOperation.content);
+                        console.log('[MultiChat] 文件写入成功');
+                        
+                        // 重新加载文件树
+                        const tree = await projectAPI.getFileTree(projectId, user.username);
+                        setFileTree(tree);
+                        
+                        // 重置进度
+                        setDocumentGenerationProgress(0, '');
+                      } catch (error) {
+                        console.error('[MultiChat] 文件写入失败:', error);
+                      }
+                    } else {
+                      setDocumentGenerationProgress(0, '');
+                    }
                   },
                   // onError
                   (error) => {
-                    console.error('❌ 流式响应错误:', error);
+                    console.error('[MultiChat] 流式响应错误:', error);
+                    setDocumentGenerationProgress(0, '');
                     throw error;
                   }
                 );
                 
                 return fullResponse;
               } catch (error: any) {
-                console.error('❌ 发送消息失败:', error);
-                return '❌ AI响应失败,请重试';
+                console.error('[MultiChat] 发送消息失败:', error);
+                return '[错误] AI响应失败,请重试';
               }
             }}
           />

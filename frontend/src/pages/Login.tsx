@@ -17,6 +17,7 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
+      // 登录成功后跳转到项目列表页（根路径）
       navigate('/');
     }
   }, [isAuthenticated, navigate]);
@@ -32,7 +33,7 @@ const Login: React.FC = () => {
     try {
       await login(values.username, values.password);
       message.success('登录成功！');
-      navigate('/');
+      // 路由跳转由上面的useEffect处理
     } catch (err) {
       // Error already handled by store
     }

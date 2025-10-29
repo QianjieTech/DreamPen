@@ -127,7 +127,7 @@ class WorldviewAgent:
         # 如果关键词检测或智能检测满足，则生成文档
         needs_document = keyword_found or should_auto_generate
         
-        print(f"🔵 流式处理 - 关键词检测: {keyword_found}, 智能检测: {should_auto_generate}, 需要生成: {needs_document}")
+        print(f"[Stream] 关键词检测: {keyword_found}, 智能检测: {should_auto_generate}, 需要生成: {needs_document}")
         
         # 流式调用LLM
         full_response = ""
@@ -147,7 +147,7 @@ class WorldviewAgent:
                 'message': '正在生成世界观文档...'
             }
             
-            print(f"🔵 开始生成世界观文档...")
+            print(f"[Agent] 开始生成世界观文档...")
             
             # 生成文档（也使用流式）
             worldview_content = ""
@@ -161,8 +161,8 @@ class WorldviewAgent:
                     'type': 'document',
                     'content': doc_chunk
                 }
+            print(f"[Agent] 文档生成完成，长度: {len(worldview_content)}")
             
-            print(f"🔵 文档生成完成，长度: {len(worldview_content)}")
             
             # 返回文件操作
             yield {
@@ -211,13 +211,13 @@ class WorldviewAgent:
         user_message_lower = user_message.lower()
         keyword_found = any(keyword in user_message_lower for keyword in keywords)
         
-        print(f"🔵 关键词检测:")
+        print(f"[Agent] 关键词检测:")
         print(f"  - 用户消息: {user_message}")
         print(f"  - 小写消息: {user_message_lower}")
         print(f"  - 检测到关键词: {keyword_found}")
         
         if keyword_found:
-            print(f"🔵 开始生成世界观文档...")
+            print(f"[Agent] 开始生成世界观文档...")
             # 用户请求生成文档,需要根据对话历史生成世界观内容
             worldview_content = await self._generate_worldview_document(
                 conversation_history + [HumanMessage(content=user_message)],
@@ -225,7 +225,7 @@ class WorldviewAgent:
                 project_id
             )
             
-            print(f"🔵 文档生成完成，长度: {len(worldview_content)}")
+            print(f"[Agent] 文档生成完成，长度: {len(worldview_content)}")
             
             file_operations.append({
                 "action": "write",
@@ -233,9 +233,9 @@ class WorldviewAgent:
                 "content": worldview_content
             })
             
-            print(f"🔵 file_operations: {[op['action'] + ': ' + op['path'] for op in file_operations]}")
+            print(f"[Agent] file_operations: {[op['action'] + ': ' + op['path'] for op in file_operations]}")
         else:
-            print(f"❌ 未检测到关键词，不生成文档")
+            print(f"[Agent] 未检测到关键词，不生成文档")
         
         return ai_reply, file_operations
     
@@ -281,7 +281,7 @@ class WorldviewAgent:
                 
                 # 如果匹配了5个以上的维度标志，认为是完整世界观
                 if matched_dimensions >= 8:
-                    print(f"🟢 智能检测: 发现完整世界观描述 (匹配维度: {matched_dimensions}/16)")
+                    print(f"[Agent] SUCCESS - 智能检测: 发现完整世界观描述 (匹配维度: {matched_dimensions}/16)")
                     return True
         
         return False

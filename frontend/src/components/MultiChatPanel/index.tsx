@@ -36,6 +36,7 @@ interface MultiChatPanelProps {
   onSendMessage?: (
     sessionId: number,
     message: string,
+    conversationHistory: Message[],
     onStreamUpdate: (content: string) => void
   ) => Promise<string>;
 }
@@ -160,6 +161,13 @@ const MultiChatPanel: React.FC<MultiChatPanelProps> = ({ projectId, onSendMessag
       return;
     }
 
+    // ⭐ 关键修复：在更新状态之前，先获取当前session的消息历史
+    const currentSession = sessions.find(s => s.id === sessionId);
+    const conversationHistory = currentSession ? currentSession.messages : [];
+    
+    console.log('[MultiChatPanel] 准备发送消息');
+    console.log('  - 当前历史消息数:', conversationHistory.length);
+
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -191,9 +199,11 @@ const MultiChatPanel: React.FC<MultiChatPanelProps> = ({ projectId, onSendMessag
     try {
       // 调用父组件提供的发送消息方法,传入流式更新回调
       if (onSendMessage) {
+        
         const finalResponse = await onSendMessage(
           sessionId,
           inputValue,
+          conversationHistory,
           // 流式更新回调 - 更新最后一条消息的内容
           (streamContent: string) => {
             setSessions(prev =>
@@ -214,26 +224,47 @@ const MultiChatPanel: React.FC<MultiChatPanelProps> = ({ projectId, onSendMessag
           }
         );
 
-        // 保存完整对话到后端
+        // 保存完整对话到后端 - 使用最新的状态
         try {
-          const session = sessions.find(s => s.id === sessionId);
-          if (session) {
-            const finalAiMessage: Message = {
-              ...aiMessage,
-              content: finalResponse,
-            };
-            await conversationAPI.update(sessionId, {
-              messages: [...session.messages, userMessage, finalAiMessage],
-            });
-          }
+          // 获取最新的session状态
+          setSessions(prev => {
+            const currentSession = prev.find(s => s.id === sessionId);
+            if (currentSession) {
+              // 异步保存,不阻塞UI
+              const finalMessages = [...currentSession.messages];
+              // 确保最后一条消息内容是最新的
+              if (finalMessages.length > 0 && finalMessages[finalMessages.length - 1].role === 'assistant') {
+                finalMessages[finalMessages.length - 1] = {
+                  ...finalMessages[finalMessages.length - 1],
+                  content: finalResponse,
+                };
+              }
+              
+              conversationAPI.update(sessionId, {
+                messages: finalMessages,
+              }).catch(saveError => {
+                console.error('保存对话失败:', saveError);
+                // 保存失败不影响用户体验,只记录错误
+              });
+            }
+            return prev;
+          });
         } catch (saveError) {
           console.error('保存对话失败:', saveError);
-          // 保存失败不影响用户体验,只记录错误
         }
       }
     } catch (error) {
       console.error('发送消息失败:', error);
       message.error('发送消息失败');
+      
+      // 发送失败时,移除刚添加的空AI消息
+      setSessions(prev =>
+        prev.map(s => {
+          if (s.id !== sessionId) return s;
+          const messages = s.messages.filter(m => m.id !== aiMessageId);
+          return { ...s, messages };
+        })
+      );
     } finally {
       setLoadingSessions(prev => ({ ...prev, [sessionId]: false }));
     }
