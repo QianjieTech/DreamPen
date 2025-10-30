@@ -256,22 +256,42 @@ const FileTree: React.FC<FileTreeProps> = ({ files, onFileSelect, onFileCreate, 
   const treeDataWithMenu = convertToTreeDataWithMenu(files);
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col" style={{ background: '#fafafa' }}>
       {/* 工具栏 */}
-      <div className="p-3 border-b border-gray-200">
+      <div
+        className="p-3"
+        style={{
+          borderBottom: '1px solid rgba(102, 126, 234, 0.1)',
+          background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.03) 100%)',
+        }}
+      >
         <Space direction="vertical" className="w-full" size="small">
           <Input
             placeholder="搜索文件..."
-            prefix={<SearchOutlined />}
+            prefix={<SearchOutlined style={{ color: '#667eea' }} />}
             value={searchValue}
             onChange={(e) => handleSearch(e.target.value)}
             allowClear
+            style={{
+              borderRadius: '8px',
+              border: '1.5px solid #e2e8f0',
+              transition: 'all 0.3s ease',
+            }}
           />
           <Button
-            type="dashed"
             icon={<PlusOutlined />}
             onClick={handleCreateFile}
             className="w-full"
+            style={{
+              height: '36px',
+              borderRadius: '8px',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              border: 'none',
+              color: 'white',
+              fontWeight: 500,
+              boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
+              transition: 'all 0.3s ease',
+            }}
           >
             新建文件
           </Button>
@@ -281,8 +301,12 @@ const FileTree: React.FC<FileTreeProps> = ({ files, onFileSelect, onFileCreate, 
       {/* 文件树 */}
       <div className="flex-1 overflow-auto p-2">
         {files.length === 0 ? (
-          <div className="text-center text-gray-400 mt-8">
-            <p>暂无文件</p>
+          <div
+            className="text-center mt-8"
+            style={{ color: '#94a3b8' }}
+          >
+            <p>📁 暂无文件</p>
+            <p className="text-xs mt-2">点击上方按钮创建文件</p>
           </div>
         ) : (
           <Tree
@@ -292,6 +316,9 @@ const FileTree: React.FC<FileTreeProps> = ({ files, onFileSelect, onFileCreate, 
             onExpand={handleExpand}
             expandedKeys={expandedKeys}
             className="bg-transparent"
+            style={{
+              background: 'transparent',
+            }}
           />
         )}
       </div>

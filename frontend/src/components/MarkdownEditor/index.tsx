@@ -89,15 +89,48 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     setIsPreview(!isPreview);
   };
 
+  // 计算字数统计
+  const wordCount = editorContent.length;
+  const lineCount = editorContent.split('\n').length;
+  const wordCountChinese = editorContent.replace(/[^\u4e00-\u9fa5]/g, '').length;
+  const wordCountEnglish = editorContent.match(/[a-zA-Z]+/g)?.length || 0;
+
   return (
     <div className="h-full flex flex-col">
       {/* 工具栏 */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-gray-50">
-        <div className="text-sm font-medium text-gray-700">
+      <div
+        className="flex items-center justify-between px-4 py-2 flex-shrink-0"
+        style={{
+          borderBottom: '1px solid rgba(102, 126, 234, 0.1)',
+          background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.03) 100%)',
+        }}
+      >
+        <div className="text-sm font-medium text-gray-700 flex items-center gap-3">
           {fileName ? (
             <>
-              {fileName}
-              {isModified && <span className="ml-2 text-orange-500">● 未保存</span>}
+              <span style={{ color: '#1e293b' }}>{fileName}</span>
+              {isModified && (
+                <span
+                  className="text-xs px-2 py-1 rounded-full"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(251, 146, 60, 0.1) 0%, rgba(249, 115, 22, 0.1) 100%)',
+                    color: '#f97316',
+                    border: '1px solid rgba(251, 146, 60, 0.2)',
+                  }}
+                >
+                  ● 未保存
+                </span>
+              )}
+              <span
+                className="text-xs px-2 py-1 rounded-full"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
+                  color: '#667eea',
+                  border: '1px solid rgba(102, 126, 234, 0.2)',
+                }}
+              >
+                {wordCount} 字符 | {lineCount} 行 | {wordCountChinese} 中文 | {wordCountEnglish} 英文词
+              </span>
             </>
           ) : (
             <span className="text-gray-400">未选择文件</span>
@@ -108,6 +141,10 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
             icon={isPreview ? <EditOutlined /> : <EyeOutlined />}
             onClick={togglePreview}
             disabled={!fileName}
+            style={{
+              borderRadius: '8px',
+              fontWeight: 500,
+            }}
           >
             {isPreview ? '编辑' : '预览'}
           </Button>
@@ -117,6 +154,13 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
             onClick={handleSave}
             loading={isLoading}
             disabled={!isModified || !fileName}
+            style={{
+              borderRadius: '8px',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              border: 'none',
+              fontWeight: 500,
+              boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
+            }}
           >
             保存 (Ctrl+S)
           </Button>
@@ -130,7 +174,58 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
             请在左侧选择一个文件开始编辑
           </div>
         ) : isPreview ? (
-          <div className="prose prose-slate max-w-none p-6 h-full overflow-auto">
+          <div
+            className="prose prose-slate max-w-none h-full overflow-auto"
+            style={{
+              padding: '32px 48px 32px 48px',
+            }}
+          >
+            <style>{`
+              .prose p {
+                margin-top: 1.5em;
+                margin-bottom: 1.5em;
+                line-height: 2;
+              }
+              .prose h1 {
+                margin-top: 2em;
+                margin-bottom: 1em;
+              }
+              .prose h2 {
+                margin-top: 1.75em;
+                margin-bottom: 0.875em;
+              }
+              .prose h3 {
+                margin-top: 1.5em;
+                margin-bottom: 0.75em;
+              }
+              .prose ul, .prose ol {
+                margin-top: 1.5em;
+                margin-bottom: 1.5em;
+              }
+              .prose li {
+                margin-top: 0.5em;
+                margin-bottom: 0.5em;
+              }
+              .prose blockquote {
+                margin-top: 1.5em;
+                margin-bottom: 1.5em;
+                padding-left: 1em;
+                border-left: 3px solid #667eea;
+              }
+              .prose code {
+                background: rgba(102, 126, 234, 0.1);
+                padding: 0.2em 0.4em;
+                border-radius: 4px;
+                font-size: 0.9em;
+              }
+              .prose pre {
+                margin-top: 1.5em;
+                margin-bottom: 1.5em;
+                background: #f8fafc;
+                border: 1px solid rgba(102, 126, 234, 0.1);
+                border-radius: 8px;
+              }
+            `}</style>
             <ReactMarkdown>{editorContent}</ReactMarkdown>
           </div>
         ) : (
@@ -142,9 +237,10 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
             className="h-full w-full font-mono border-0 rounded-none resize-none"
             style={{
               fontSize: '14px',
-              lineHeight: '1.8',
-              padding: '16px',
+              lineHeight: '2',
+              padding: '32px 48px 32px 48px',
               minHeight: '100%',
+              background: '#fafafa',
             }}
             autoSize={false}
           />

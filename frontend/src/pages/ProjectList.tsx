@@ -79,19 +79,46 @@ const ProjectList: React.FC = () => {
 
   return (
     <Layout>
-      <div className="p-8 h-full overflow-auto bg-gray-50">
+      <div
+        className="p-8 h-full overflow-auto"
+        style={{
+          background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+        }}
+      >
         <div className="max-w-7xl mx-auto">
           {/* 头部 */}
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">我的项目</h1>
-              <p className="text-gray-600 mt-2">选择一个项目开始创作，或创建新的项目</p>
+              <h1
+                className="text-3xl font-bold mb-2"
+                style={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  letterSpacing: '-0.5px',
+                }}
+              >
+                我的项目
+              </h1>
+              <p className="text-gray-600">选择一个项目开始创作，或创建新的项目</p>
             </div>
             <Button
               type="primary"
               size="large"
               icon={<PlusOutlined />}
               onClick={() => setCreateModalVisible(true)}
+              style={{
+                height: '48px',
+                fontSize: '16px',
+                fontWeight: 500,
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                border: 'none',
+                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
+                padding: '0 24px',
+                transition: 'all 0.3s ease',
+              }}
             >
               创建新项目
             </Button>
@@ -104,7 +131,20 @@ const ProjectList: React.FC = () => {
                 description="还没有项目，创建一个开始吧"
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
               >
-                <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateModalVisible(true)}>
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => setCreateModalVisible(true)}
+                  style={{
+                    height: '44px',
+                    fontSize: '15px',
+                    fontWeight: 500,
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    border: 'none',
+                    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
+                  }}
+                >
                   创建第一个项目
                 </Button>
               </Empty>
@@ -115,8 +155,14 @@ const ProjectList: React.FC = () => {
                 <Card
                   key={project.id}
                   hoverable
-                  className="shadow-sm hover:shadow-md transition-shadow"
+                  className="transition-all duration-300"
                   onClick={() => handleOpenProject(project.project_id)}
+                  style={{
+                    borderRadius: '16px',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+                    border: '1px solid rgba(102, 126, 234, 0.1)',
+                    overflow: 'hidden',
+                  }}
                   actions={[
                     <Button
                       type="text"
@@ -124,6 +170,10 @@ const ProjectList: React.FC = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         handleOpenProject(project.project_id);
+                      }}
+                      style={{
+                        color: '#667eea',
+                        fontWeight: 500,
                       }}
                     >
                       打开
@@ -144,6 +194,9 @@ const ProjectList: React.FC = () => {
                         danger
                         icon={<DeleteOutlined />}
                         onClick={(e) => e.stopPropagation()}
+                        style={{
+                          fontWeight: 500,
+                        }}
                       >
                         删除
                       </Button>
@@ -151,14 +204,21 @@ const ProjectList: React.FC = () => {
                   ]}
                 >
                   <Card.Meta
-                    title={<div className="text-lg font-semibold truncate">{project.name}</div>}
+                    title={
+                      <div
+                        className="text-lg font-semibold truncate"
+                        style={{ color: '#1e293b', marginBottom: '8px' }}
+                      >
+                        📝 {project.name}
+                      </div>
+                    }
                     description={
                       <div>
-                        <p className="text-gray-600 line-clamp-2 min-h-[40px]">
+                        <p className="text-gray-600 line-clamp-2 min-h-[40px] text-sm">
                           {project.description || '暂无描述'}
                         </p>
-                        <p className="text-xs text-gray-400 mt-2">
-                          创建于 {new Date(project.created_at).toLocaleDateString()}
+                        <p className="text-xs mt-3" style={{ color: '#94a3b8' }}>
+                          🕒 {new Date(project.created_at).toLocaleDateString('zh-CN')}
                         </p>
                       </div>
                     }

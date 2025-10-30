@@ -292,19 +292,60 @@ const MultiChatPanel: React.FC<MultiChatPanelProps> = ({ projectId, onSendMessag
   };
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
+    <div
+      className="h-full flex flex-col"
+      style={{
+        background: 'linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%)',
+      }}
+    >
       {/* 顶部工具栏 */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white flex-shrink-0">
+      <div
+        className="flex items-center justify-between px-4 py-3 flex-shrink-0"
+        style={{
+          borderBottom: '1px solid rgba(102, 126, 234, 0.1)',
+          background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.03) 100%)',
+        }}
+      >
         <div className="flex items-center space-x-2">
-          <RobotOutlined className="text-lg text-blue-500" />
-          <span className="font-semibold text-gray-700">AI 助手</span>
-          <Tag color="blue">{sessions.length} 个对话</Tag>
+          <RobotOutlined
+            className="text-lg"
+            style={{ color: '#667eea' }}
+          />
+          <span
+            className="font-semibold"
+            style={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >
+            AI 助手
+          </span>
+          <Tag
+            style={{
+              background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
+              border: '1px solid rgba(102, 126, 234, 0.2)',
+              color: '#667eea',
+              borderRadius: '12px',
+            }}
+          >
+            {sessions.length} 个对话
+          </Tag>
         </div>
         <Button
           type="primary"
           icon={<PlusOutlined />}
           onClick={handleCreateSession}
           size="small"
+          style={{
+            height: '32px',
+            borderRadius: '8px',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            border: 'none',
+            fontWeight: 500,
+            boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
+          }}
         >
           新建对话
         </Button>
@@ -329,13 +370,36 @@ const MultiChatPanel: React.FC<MultiChatPanelProps> = ({ projectId, onSendMessag
           sessions.filter(s => !s.isCollapsed).map(session => (
             <div
               key={session.id}
-              className="flex-1 flex flex-col min-h-0 bg-white rounded-lg shadow-sm border border-blue-400"
+              className="flex-1 flex flex-col min-h-0 rounded-lg shadow-sm"
+              style={{
+                background: 'white',
+                border: '2px solid rgba(102, 126, 234, 0.3)',
+              }}
             >
               {/* 展开状态 - 对话头部 */}
-              <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 flex-shrink-0">
+              <div
+                className="flex items-center justify-between px-3 py-2 flex-shrink-0"
+                style={{
+                  borderBottom: '1px solid rgba(102, 126, 234, 0.1)',
+                  background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)',
+                }}
+              >
                 <div className="flex items-center space-x-2 flex-1">
-                  <span className="font-medium text-gray-700">{session.title}</span>
-                  <Tag color="green" className="text-xs">
+                  <span
+                    className="font-medium"
+                    style={{ color: '#1e293b' }}
+                  >
+                    {session.title}
+                  </span>
+                  <Tag
+                    className="text-xs"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%)',
+                      border: '1px solid rgba(34, 197, 94, 0.2)',
+                      color: '#22c55e',
+                      borderRadius: '10px',
+                    }}
+                  >
                     {session.messages.length} 条消息
                   </Tag>
                 </div>
@@ -377,14 +441,20 @@ const MultiChatPanel: React.FC<MultiChatPanelProps> = ({ projectId, onSendMessag
                       className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                       <div
-                        className={`flex items-start space-x-2 max-w-[80%] ${
+                        className={`flex items-start space-x-3 max-w-[85%] ${
                           msg.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
                         }`}
                       >
                         <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                            msg.role === 'user' ? 'bg-blue-500' : 'bg-green-500'
-                          }`}
+                          className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                          style={{
+                            background: msg.role === 'user'
+                              ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                              : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                            boxShadow: msg.role === 'user'
+                              ? '0 2px 8px rgba(102, 126, 234, 0.3)'
+                              : '0 2px 8px rgba(16, 185, 129, 0.3)',
+                          }}
                         >
                           {msg.role === 'user' ? (
                             <UserOutlined className="text-white" />
@@ -393,20 +463,38 @@ const MultiChatPanel: React.FC<MultiChatPanelProps> = ({ projectId, onSendMessag
                           )}
                         </div>
                         <div
-                          className={`rounded-lg px-3 py-2 ${
-                            msg.role === 'user'
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
+                          className="rounded-2xl px-4 py-3"
+                          style={{
+                            ...(msg.role === 'user' ? {
+                              background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%)',
+                              backdropFilter: 'blur(10px)',
+                              color: 'white',
+                              boxShadow: '0 4px 16px rgba(102, 126, 234, 0.2)',
+                            } : {
+                              background: 'rgba(255, 255, 255, 0.8)',
+                              backdropFilter: 'blur(10px)',
+                              border: '1px solid rgba(0, 0, 0, 0.08)',
+                              color: '#1e293b',
+                              boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
+                            }),
+                          }}
                         >
                           {msg.role === 'assistant' ? (
-                            <div className="prose prose-sm max-w-none">
+                            <div
+                              className="prose prose-sm max-w-none"
+                              style={{
+                                color: '#1e293b',
+                              }}
+                            >
                               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                 {msg.content}
                               </ReactMarkdown>
                             </div>
                           ) : (
-                            <div className="whitespace-pre-wrap break-words text-sm">
+                            <div
+                              className="whitespace-pre-wrap break-words text-sm leading-relaxed"
+                              style={{ color: 'white' }}
+                            >
                               {msg.content}
                             </div>
                           )}
