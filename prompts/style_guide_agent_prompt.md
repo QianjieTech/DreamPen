@@ -124,7 +124,7 @@
 
 使用 `write_to_file` 工具生成：
 - 路径：`./01_settings/style_guide.md`（或用户指定路径）
-- 严格遵循 [`./template/StyleGuide_template.md`]结构
+- 严格遵循 [`./.template/StyleGuide_template.md`]结构
 
 ### 文档内容要求
 

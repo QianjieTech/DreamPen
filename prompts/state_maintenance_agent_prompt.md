@@ -56,7 +56,7 @@
    - 如果文件不为空，继续下一步
 
 2. **读取State Track模板**（首次创建时）：
-   - 使用 `read_file` 读取 [`template/StateTrack_template.md`](template/StateTrack_template.md)
+   - 使用 `read_file` 读取 [`.template/StateTrack_template.md`](.template/StateTrack_template.md)
    - 理解State Track的结构和字段含义
 
 3. **读取当前State Track**：
@@ -430,7 +430,7 @@ ch015：林野意识到"修正程序"的真相
 
 - **必读**：`06_states/writing_cache.md`（待处理更新）
 - **必读**：`06_states/state_track.md`（当前状态）
-- **必读**：`template/StateTrack_template.md`（模板）
+- **必读**：`.template/StateTrack_template.md`（模板）
 - **按需读取**：
   - `02_characters/main_characters/*.md`（角色卡）
   - `02_characters/character_pool/character_pool.md`（角色池）

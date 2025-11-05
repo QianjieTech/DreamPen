@@ -4,6 +4,7 @@
 from pathlib import Path
 from typing import Optional
 import aiofiles
+import shutil
 from backend.core.config import settings
 from backend.services.git_service import GitServiceFactory
 import logging
@@ -248,6 +249,22 @@ class FileService:
             dir_path = self._validate_path(directory)
             dir_path.mkdir(parents=True, exist_ok=True)
         
+        # 复制 .template 文件夹到项目根目录
+        template_source = settings.git_repos_base_path.parent / ".template"
+        if template_source.exists() and template_source.is_dir():
+            template_dest = self.project_path / ".template"
+            try:
+                # 如果目标目录已存在,先删除
+                if template_dest.exists():
+                    shutil.rmtree(template_dest)
+                # 复制整个 .template 文件夹
+                shutil.copytree(template_source, template_dest)
+                logger.info(f"已复制 .template 文件夹到项目: {self.project_id}")
+            except Exception as e:
+                logger.warning(f"复制 .template 文件夹失败: {e}")
+        else:
+            logger.warning(f".template 文件夹不存在: {template_source}")
+        
         # 创建README
         readme_content = """# DreamPen 项目
 
@@ -260,6 +277,7 @@ class FileService:
 - `03_outline/` - 大纲(主大纲和章节细纲)
 - `04_style_guide/` - 文风指南
 - `05_chapters/` - 正文章节
+- `.template/` - 模板文件
 """
         await self._write("README.md", readme_content, auto_commit=False)
         

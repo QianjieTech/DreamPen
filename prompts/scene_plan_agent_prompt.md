@@ -84,7 +84,7 @@
 **在开始任何工作前，必须执行以下步骤**：
 
 1. **读取细纲模板**：
-   - 使用 `read_file`工具读取[`template/ScenePlan_template.md`](./template/ScenePlan_template.md)
+   - 使用 `read_file`工具读取[`.template/ScenePlan_template.md`](./.template/ScenePlan_template.md)
    - **重点理解**：
      - 新版细纲的"留白"理念
      - 【场景设定】、【剧情倾向】、【角色动机】、【演绎法约束】的含义
@@ -125,7 +125,7 @@
 
 ### 1. 细纲生成流程
 
-**严格遵循[`template/ScenePlan_template.md`](./template/ScenePlan_template.md)的结构**
+**严格遵循[`.template/ScenePlan_template.md`](./.template/ScenePlan_template.md)的结构**
 
 #### 阶段0：细纲元数据初始化
 
@@ -391,7 +391,7 @@
    - 使用 `write_to_file`工具
    - 文件路径：`04_scene_plans/scene_plan_stage_0X_unit_0X.md`
    - 例如：`04_scene_plans/scene_plan_stage_01_unit_01.md`
-   - 严格遵循[`template/ScenePlan_template.md`](./template/ScenePlan_template.md)结构
+   - 严格遵循[`.template/ScenePlan_template.md`](./.template/ScenePlan_template.md)结构
 
 2. **文档内容要求**：
    - 移除模板中的"使用说明"和"示例"部分
@@ -469,7 +469,7 @@
 - **必读**：[`02_characters/main_characters/*.md`](./02_characters/main_characters/)（角色卡）
 - **必读**：[`02_characters/character_pool/character_pool.md`](./02_characters/character_pool/character_pool.md)（角色池）
 - **必读**：[`01_settings/style_guide.md`](./01_settings/style_guide.md)（文风指南）
-- **模板**：[`template/ScenePlan_template.md`](./template/ScenePlan_template.md)
+- **模板**：[`.template/ScenePlan_template.md`](./.template/ScenePlan_template.md)
 
 **输出产物**：
 - `04_scene_plans/scene_plan_stage_0X_unit_0X.md`（细纲文档）
