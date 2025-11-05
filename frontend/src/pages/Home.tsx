@@ -379,7 +379,7 @@ const Home: React.FC = () => {
         chatPanel={
           <MultiChatPanel
             projectId={projectId}
-            onSendMessage={async (sessionId: number, message: string, conversationHistory: Message[], onStreamUpdate: (content: string) => void) => {
+            onSendMessage={async (sessionId: number, message: string, conversationHistory: Message[], onStreamUpdate: (content: string) => void, customPrompt?: string) => {
               // 调用流式 API,使用回调来更新UI
               try {
                 // 使用传入的 conversationHistory（来自当前 session）
@@ -391,6 +391,7 @@ const Home: React.FC = () => {
                 console.log('[MultiChat] 发送消息');
                 console.log('  - 当前session消息数:', conversationHistory.length);
                 console.log('  - 新消息:', message.slice(0, 50));
+                console.log('  - 自定义提示词:', customPrompt ? '已提供' : '未提供');
                 
                 let fullResponse = '';
                 let documentContent = '';
@@ -399,11 +400,12 @@ const Home: React.FC = () => {
                 
                 const { setDocumentGenerationProgress } = useAppStore.getState();
                 
-                // 使用流式API
+                // 使用流式API，传递自定义提示词
                 await worldviewAPI.chatStream(
                   {
                     message: message,
                     conversation_history: chatHistory,
+                    custom_prompt: customPrompt,
                   },
                   // onChunk - 处理每个数据块
                   (chunk) => {

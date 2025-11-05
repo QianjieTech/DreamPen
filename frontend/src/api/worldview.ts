@@ -128,6 +128,23 @@ export const worldviewAPI = {
    */
   chat: (data: ChatRequest) =>
     apiClient.post<ChatResponse>('/api/worldview/chat', data),
+  
+  /**
+   * 使用自定义提示词对话（流式）
+   */
+  chatStreamWithPrompt: async (
+    data: ChatRequest,
+    customPrompt: string | undefined,
+    onChunk: (chunk: any) => void,
+    onComplete: () => void,
+    onError: (error: Error) => void
+  ) => {
+    const requestData = {
+      ...data,
+      custom_prompt: customPrompt
+    };
+    return worldviewAPI.chatStream(requestData, onChunk, onComplete, onError);
+  },
 
   /**
    * 读取世界观文件

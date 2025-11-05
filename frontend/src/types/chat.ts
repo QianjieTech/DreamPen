@@ -13,6 +13,7 @@ export interface Message {
 export interface ChatRequest {
   message: string;
   conversation_history: ChatMessage[];
+  custom_prompt?: string;
 }
 
 export interface ChatMessage {

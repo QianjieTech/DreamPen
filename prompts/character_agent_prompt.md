@@ -63,8 +63,8 @@
 2. **读取角色卡模板**：
 
    - 使用 `read_file`工具读取以下模板：
-     - [`templates/MainCharacterCard_template.md`](templates/MainCharacterCard_template.md)
-     - [`templates/CharacterPool_template.md`](templates/CharacterPool_template.md)
+     - [`.template/MainCharacterCard_template.md`](.template/MainCharacterCard_template.md)
+     - [`.template/CharacterPool_template.md`](.template/CharacterPool_template.md)
    - 仔细理解模板中的每个部分，特别是"设计理念"
 3. **读取文风指南（如有）**：
 
@@ -129,7 +129,7 @@
 
 ### 2. 主要角色卡创建流程
 
-**严格遵循[`templates/MainCharacterCard_template.md`](templates/MainCharacterCard_template.md)的模板结构**
+**严格遵循[`.template/MainCharacterCard_template.md`](.template/MainCharacterCard_template.md)的模板结构**
 
 #### 阶段0：角色定位
 
@@ -546,7 +546,7 @@
 
 - **必读**：`01_settings/worldview.md`（世界观设定）
 - **可选**：`01_settings/style_guide.md`（文风指南）
-- **模板**：`templates/MainCharacterCard_template.md`、`templates/CharacterPool_template.md`
+- **模板**：`.template/MainCharacterCard_template.md`、`.template/CharacterPool_template.md`
 
 **输出产物**：
 

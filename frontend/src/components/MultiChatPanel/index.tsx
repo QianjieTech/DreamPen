@@ -20,6 +20,8 @@ import type { Message } from '../../types/chat';
 import { useAppStore } from '../../store';
 import { conversationAPI } from '../../api/conversation';
 import type { ConversationResponse } from '../../types/chat';
+import PromptSelector from '../PromptSelector';
+import { getPromptContent } from '../../api/prompts';
 
 const { TextArea } = Input;
 
@@ -37,7 +39,8 @@ interface MultiChatPanelProps {
     sessionId: number,
     message: string,
     conversationHistory: Message[],
-    onStreamUpdate: (content: string) => void
+    onStreamUpdate: (content: string) => void,
+    customPrompt?: string
   ) => Promise<string>;
 }
 
@@ -46,12 +49,27 @@ const MultiChatPanel: React.FC<MultiChatPanelProps> = ({ projectId, onSendMessag
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
   const [inputValues, setInputValues] = useState<Record<number, string>>({});
   const [loadingSessions, setLoadingSessions] = useState<Record<number, boolean>>({});
+  const [selectedPromptName, setSelectedPromptName] = useState<string>('worldview_agent');
+  const [customPromptContent, setCustomPromptContent] = useState<string | undefined>(undefined);
   const messagesEndRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   // 加载用户的所有对话
   useEffect(() => {
     loadConversations();
   }, [projectId]);
+
+  // 处理提示词切换
+  const handlePromptChange = async (promptName: string, displayName: string) => {
+    try {
+      const data = await getPromptContent(promptName);
+      setCustomPromptContent(data.content);
+      setSelectedPromptName(promptName);
+      message.success(`已切换到: ${displayName}`);
+    } catch (error) {
+      console.error('加载提示词失败:', error);
+      message.error('加载提示词失败');
+    }
+  };
 
   const loadConversations = async () => {
     try {
@@ -221,7 +239,8 @@ const MultiChatPanel: React.FC<MultiChatPanelProps> = ({ projectId, onSendMessag
                 return { ...s, messages: updatedMessages };
               })
             );
-          }
+          },
+          customPromptContent // 传递自定义提示词
         );
 
         // 保存完整对话到后端 - 使用最新的状态
@@ -322,6 +341,11 @@ const MultiChatPanel: React.FC<MultiChatPanelProps> = ({ projectId, onSendMessag
           >
             AI 助手
           </span>
+          <PromptSelector
+            value={selectedPromptName}
+            onChange={handlePromptChange}
+            style={{ minWidth: 200 }}
+          />
           <Tag
             style={{
               background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',

@@ -1,0 +1,24 @@
+.prompt-selector {
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+.prompt-selector .ant-select {
+  transition: all 0.3s;
+}
+
+.prompt-selector .ant-select:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.prompt-selector .ant-select-selector {
+  border-radius: 4px !important;
+}
+
+.prompt-selector .ant-select-focused .ant-select-selector {
+  border-color: #1890ff !important;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+}

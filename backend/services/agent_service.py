@@ -27,7 +27,7 @@ class AgentState(TypedDict):
 class WorldviewAgent:
     """世界观构建Agent"""
     
-    # 从提示词文件提取的系统提示
+    # 默认系统提示（可被动态提示词覆盖）
     SYSTEM_PROMPT = """你是 **Worldview Architect**,一个专业的小说世界观构建专家。你的核心理念是通过扎实的基础设定,让故事世界自然运转。
 
 核心职责:
@@ -78,14 +78,34 @@ class WorldviewAgent:
 
 当用户表示完成收集信息后,你需要生成完整的世界观Markdown文档。文档应该结构清晰,包含所有已确认的维度设定。"""
     
-    def __init__(self, llm: ChatOpenAI):
+    def __init__(self, llm: ChatOpenAI, custom_prompt: str | None = None):
         """
         初始化世界观Agent
         
         Args:
             llm: OpenAI语言模型
+            custom_prompt: 自定义系统提示词（可选）
         """
         self.llm = llm
+        self.custom_prompt = custom_prompt
+    
+    def _get_system_prompt(self) -> str:
+        """
+        获取系统提示词
+        
+        Returns:
+            str: 系统提示词内容（优先使用自定义，否则使用默认）
+        """
+        return self.custom_prompt if self.custom_prompt else self.SYSTEM_PROMPT
+    
+    def set_prompt(self, prompt_content: str):
+        """
+        动态设置提示词
+        
+        Args:
+            prompt_content: 新的提示词内容
+        """
+        self.custom_prompt = prompt_content
     
     async def chat_stream(
         self,
@@ -108,7 +128,7 @@ class WorldviewAgent:
         """
         # 构建消息列表
         messages = [
-            SystemMessage(content=self.SYSTEM_PROMPT),
+            SystemMessage(content=self._get_system_prompt()),
             *conversation_history,
             HumanMessage(content=user_message)
         ]
@@ -511,9 +531,12 @@ class AgentFactory:
     """Agent工厂"""
     
     @staticmethod
-    def create_worldview_agent() -> WorldviewAgent:
+    def create_worldview_agent(custom_prompt: str | None = None) -> WorldviewAgent:
         """
         创建世界观Agent
+        
+        Args:
+            custom_prompt: 自定义系统提示词（可选）
         
         Returns:
             世界观Agent实例
@@ -524,7 +547,7 @@ class AgentFactory:
             model=settings.openai_model,
             temperature=settings.openai_temperature
         )
-        return WorldviewAgent(llm)
+        return WorldviewAgent(llm, custom_prompt)
     
     @staticmethod
     def create_workflow() -> CreativeAgentWorkflow:

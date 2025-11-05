@@ -13,6 +13,7 @@ from backend.models.schemas import (
     SuccessResponse
 )
 from backend.services.agent_service import AgentFactory
+from backend.services.agent_service_with_tools import AgentFactoryWithTools
 from backend.services.file_service import FileServiceFactory
 
 router = APIRouter(prefix="/worldview", tags=["Worldview"])
@@ -54,10 +55,15 @@ async def chat_with_worldview_agent_stream(
             yield f"data: {initial_msg}\n\n".encode('utf-8')
             print("[generate] 初始消息已发送")
             
-            # 创建Agent
-            print("[generate] 开始创建Agent...")
-            agent = AgentFactory.create_worldview_agent()
-            print("[generate] Agent创建成功")
+            # 创建Agent - 使用支持工具调用的版本
+            print("[generate] 开始创建Agent (with tools)...")
+            custom_prompt = getattr(request, 'custom_prompt', None)
+            agent = AgentFactoryWithTools.create_worldview_agent(
+                user_id=user_id,
+                project_id=project_id,
+                custom_prompt=custom_prompt
+            )
+            print(f"[generate] Agent创建成功 (custom_prompt: {bool(custom_prompt)}, tools enabled)")
             
             # 转换对话历史
             conversation_history = []
@@ -68,14 +74,12 @@ async def chat_with_worldview_agent_stream(
                     conversation_history.append(AIMessage(content=msg.content))
             print(f"[generate] 对话历史转换完成, 共{len(conversation_history)}条消息")
             
-            # 调用Agent的流式方法
+            # 调用Agent的流式方法（工具版本不需要user_id和project_id参数）
             chunk_count = 0
-            print("[generate] 开始调用agent.chat_stream...")
+            print("[generate] 开始调用agent.chat_stream (with tools)...")
             async for chunk in agent.chat_stream(
                 user_message=request.message,
-                conversation_history=conversation_history,
-                user_id=user_id,
-                project_id=project_id
+                conversation_history=conversation_history
             ):
                 chunk_count += 1
                 print(f"[generate] 收到chunk #{chunk_count}: {chunk.get('type', 'unknown')}")
@@ -139,8 +143,13 @@ async def chat_with_worldview_agent(
         AI回复和文件操作
     """
     try:
-        # 创建Agent
-        agent = AgentFactory.create_worldview_agent()
+        # 创建Agent - 使用支持工具调用的版本
+        custom_prompt = getattr(request, 'custom_prompt', None)
+        agent = AgentFactoryWithTools.create_worldview_agent(
+            user_id=user_id,
+            project_id=project_id,
+            custom_prompt=custom_prompt
+        )
         
         # 转换对话历史为LangChain消息格式
         conversation_history = []
@@ -150,12 +159,10 @@ async def chat_with_worldview_agent(
             elif msg.role == "assistant":
                 conversation_history.append(AIMessage(content=msg.content))
         
-        # 调用Agent
+        # 调用Agent（工具版本不需要user_id和project_id参数）
         ai_reply, file_operations = await agent.chat(
             user_message=request.message,
-            conversation_history=conversation_history,
-            user_id=user_id,
-            project_id=project_id
+            conversation_history=conversation_history
         )
         
         # 添加日志

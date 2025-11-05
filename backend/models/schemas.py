@@ -50,6 +50,7 @@ class WorldviewChatRequest(BaseModel):
         default_factory=list,
         description="对话历史"
     )
+    custom_prompt: Optional[str] = Field(None, description="自定义提示词")
 
 
 class WorldviewChatResponse(BaseModel):

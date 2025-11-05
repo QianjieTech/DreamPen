@@ -52,10 +52,11 @@ async def health_check():
 
 
 # 导入并注册路由
-from backend.api import worldview, projects, auth, version_control, conversations
+from backend.api import worldview, projects, auth, version_control, conversations, prompts
 
 app.include_router(auth.router, prefix=settings.api_prefix)
 app.include_router(worldview.router, prefix=settings.api_prefix)
 app.include_router(projects.router, prefix=settings.api_prefix)
 app.include_router(version_control.router, prefix=settings.api_prefix)
 app.include_router(conversations.router, prefix=settings.api_prefix)
+app.include_router(prompts.router, prefix=settings.api_prefix)
